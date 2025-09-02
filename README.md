@@ -12,7 +12,7 @@ Project repo: https://github.com/Kaizaki02/building_medical_chatbot_with_RAG.git
 ### STEP 01- Create a conda environment after opening the repository
 
 '''bash
-conda create -n medibot python == 3.12 -y
+conda create -n medibot python == 3.10.18 -y
 '''
 
 
