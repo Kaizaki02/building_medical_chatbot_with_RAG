@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MedBot — Chat Interface</title>
+
+  <!-- Link to external stylesheet -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div class="brand">MedBot</div>
+      <div class="subtitle">Ask your trained model — secure & local</div>
+    </header>
+
+    <section class="chat-area" id="chatArea" aria-live="polite">
+      <!-- Chat messages will be appended here -->
+      <div class="msg system">
+        System ready. Type your question and press Send.
+      </div>
+    </section>
+
+    <form id="chatForm" class="composer" action="/api/chat" method="post" onsubmit="return sendMessage(event)">
+      <input
+        id="userInput"
+        name="query"
+        class="input"
+        type="text"
+        autocomplete="off"
+        placeholder="Type your question..."
+        required
+        aria-label="Type your question"
+      />
+
+      <label class="file-label">
+        <input id="fileInput" name="file" type="file" class="file-input" />
+        Attach
+      </label>
+
+      <button type="submit" class="btn-send">Send</button>
+    </form>
+
+    <footer class="app-footer">
+      <small>Model runs on your server. This UI only forwards queries — no medical advice content is prefilled.</small>
+    </footer>
+  </main>
+
+  <script>
+    // Minimal JS to append messages and POST to backend endpoint.
+    // You can replace fetch URL with your actual server endpoint.
+    async function sendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('userInput');
+      const fileInput = document.getElementById('fileInput');
+      const chatArea = document.getElementById('chatArea');
+
+      const text = input.value.trim();
+      if (!text && fileInput.files.length === 0) return;
+
+      // Append user's message locally
+      appendMessage('user', text || (fileInput.files.length ? fileInput.files[0].name : ''));
+
+      // Prepare form data
+      const fd = new FormData();
+      fd.append('query', text);
+      if (fileInput.files.length) fd.append('file', fileInput.files[0]);
+
+      // Clear input and show spinner message
+      input.value = '';
+      const loadingId = appendMessage('assistant loading', 'Generating response...');
+
+      try {
+        const res = await fetch('/api/chat', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error('Server error');
+
+        // Expect server to return JSON: { reply: "..." }
+        const data = await res.json();
+        updateMessage(loadingId, 'assistant', data.reply || '[no reply]');
+      } catch (err) {
+        updateMessage(loadingId, 'assistant error', 'Error generating response. Please try again.');
+        console.error(err);
+      } finally {
+        // reset file input
+        fileInput.value = '';
+      }
+
+      return false;
+    }
+
+    function appendMessage(role, text) {
+      const chatArea = document.getElementById('chatArea');
+      const el = document.createElement('div');
+      el.className = `msg ${role}`;
+      el.textContent = text;
+      chatArea.appendChild(el);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      return el; // return element for later update
+    }
+
+    function updateMessage(el, role, text) {
+      // if first arg is element returned earlier
+      if (typeof el !== 'object') return;
+      el.className = `msg ${role}`;
+      el.textContent = text;
+      const chatArea = document.getElementById('chatArea');
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+  </script>
+</body>
+</html>
