@@ -1,38 +1,46 @@
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from typing import List
 import os
 from langchain.schema import Document
 # ...existing code...
 
 
-# ...existing code...
+# extract text from pdf files 
 def load_pdf_file(data):
-    loader = DirectoryLoader(
-        data,
-        glob='*.pdf',
-        loader_cls=PyPDFLoader
+  loader = DirectoryLoader(
+    data, 
+    glob="*.pdf", 
+    loader_cls=PyPDFLoader
     )
-    documents = loader.load()
-    return documents
+  documents = loader.load()
+  return documents
 
 
-def filter_to_minimal_docs(docs: List[Document]) -> List[Document]:
+# filter operation 
+from typing import List
+from langchain.schema import Document
+
+def filter_to_minimal_docs(docs:List[Document])->List[Document]:
   """
-  Given a list of Document objects , a new list of Document objects 
-  containing only 'source' in metadata and the original page_content.
+  Given a list of Document objects , return a new list of Document objects containing only
+  'source' in metadata and the original page_content
   """
-  minimal_docs:List[Document] = []
+  minimal_docs: List[Document] = []
   for doc in docs:
-    src = doc.metadata.get('source')
-    minimal_docs.append(
-      Document(
-        page_content=doc.page_content,
-        metadata={'source':src}
+      src = doc.metadata.get("source")
+      minimal_docs.append(
+          Document(
+              page_content=doc.page_content,
+              metadata={"source": src}
+          )
       )
-    )
-  return minimal_docs 
+  return minimal_docs  # <-- should be here, outside the
+
+
+
+
 
 # Split the documentation into smaller chunks 
 def text_splitter(minimal_docs):
@@ -48,5 +56,10 @@ def text_splitter(minimal_docs):
 #Download the Embedding from HuggingFace
 
 def download_hugging_face_embedding():
-  embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-  return embedding
+  model_name="sentence-transformers/all-MiniLM-L6-v2"
+  embeddings = HuggingFaceEmbeddings(
+    model_name=model_name,
+    model_kwargs={"device": "cpu"},
+    encode_kwargs={"normalize_embeddings": True}
+  )
+  return embeddings

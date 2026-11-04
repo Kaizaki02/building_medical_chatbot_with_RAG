@@ -5,16 +5,10 @@ from pinecone import Pinecone
 from pinecone import ServerlessSpec 
 from langchain_pinecone import PineconeVectorStore
 
-load_dotenv()
+
+load_dotenv(override=True)
 
 
-PINECONE_API_KEY=os.environ.get('PINECONE_API_KEY')
-GEMINI_API_KEY=os.environ.get('GEMINI_API_KEY')
-HUGGINGFACE_API_KEY=os.environ.get('HUGGINGFACE_API_KEY')
-
-os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY
-os.environ['HUGGINGFACE_API_KEY'] =HUGGINGFACE_API_KEY
 
 
 extracted_data=load_pdf_file(data='data/')
@@ -22,8 +16,7 @@ filter_data = filter_to_minimal_docs(extracted_data)
 text_chunks=text_splitter(filter_data)
 
 embedding = download_hugging_face_embedding()
-
-pinecone_api_key = PINECONE_API_KEY
+pinecone_api_key = os.environ.get('PINECONE_API_KEY')
 pc = Pinecone(api_key=pinecone_api_key)
 
 
